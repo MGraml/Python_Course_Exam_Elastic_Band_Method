@@ -94,8 +94,9 @@ p_init  = (10,offs)
 p_final = (offs,10)
 #Creating a linear interpolation between the two points as a first guess
 band = np.zeros([N_band,2])
-band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
-band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
+band[:,0]   = np.arange(0,10000,10000//N_band)
+band[:,1]   = np.arange(0,10000,10000//N_band)
+band[3,0]   = -600
 band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #print(band)
 #data = pd.read_csv("map_data.csv")
