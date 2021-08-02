@@ -1,5 +1,6 @@
 from numpy.lib.function_base import _parse_input_dimensions
 import scipy as sp
+from scipy import optimize as opt
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -57,22 +58,28 @@ def Energy(band,k=1):
     Optional arguments:
     - k     the spring constant, by default set to 1
     """
-    X,Y = band
+    #band = np.array(band)
+    #print(len(band))
+    X = band[::2]
+    Y = band[1::2]
+    #X = [band[i][0] for i in range(len(band))]
+    #Y = [band[i][1] for i in range(len(band))]
     results = []
-    if idx == 0 or idx == np.size(band,axis=0)-1:
-        results.append(0)
-    else:
-        results.append(k * ((band[idx-1,0]-band[idx,0])**2+(band[idx+1,0]-band[idx,0])**2 + \
-                    (band[idx-1,1]-band[idx,1])**2 + (band[idx+1,1]-band[idx,1])**2))
-    return results
-
+    for idpoint in range(len(band)//2):
+        if idpoint == 0 or idpoint == len(band)//2-1:
+            results.append(0)
+        else:
+            results.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
+                        (Y[idpoint-1]-Y[idpoint])**2 + (Y[idpoint+1]-Y[idpoint-1])**2))
+    return np.sum(results)
+    
 
 
 
 
 offs = -3*10/4
 #giving the length of the band N and the initial/final endpoint coordinates p
-N_band  = 100
+N_band  = 5
 p_init  = (10,offs)
 p_final = (offs,10)
 #Creating a linear interpolation between the two points as a first guess
@@ -81,5 +88,14 @@ band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
 band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
 band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #print(band)
-data = pd.read_csv("./map_data.csv")
+data = pd.read_csv("map_data.csv")
 
+
+res = opt.minimize(Energy,band_list)
+#%%
+new_x = np.array(res.x[::2])
+new_y = np.array(res.x[1::2])
+new_band = np.stack((new_x,new_y))
+plt.contourf(data)
+plt.scatter(new_band[0],new_band[1])
+print(new_band)
