@@ -48,15 +48,16 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     Z.to_csv("map_data.csv")
     return Z
 
-def Energy(band_list,k=1):
+def Energy(band,k=1):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
-    - band_list     1D array of meshgrids
+    - band     1D array of tuples
     
     Optional arguments:
     - k     the spring constant, by default set to 1
     """
+    X,Y = band
     results = []
     if idx == 0 or idx == np.size(band,axis=0)-1:
         results.append(0)
@@ -78,7 +79,7 @@ p_final = (offs,10)
 band = np.zeros([N_band,2])
 band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
 band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
-band_list = list(band[:,0],band[:,1])
+band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #print(band)
 data = pd.read_csv("./map_data.csv")
 
