@@ -68,10 +68,13 @@ def Energy(band,init,final,k=1):
     Y = list(band[1::2])
     Y.insert(0,init[1])
     Y.append(final[1])
+    
+    print(f'X={X}')
+    print(f'Y={Y}')
+    
     X = [np.round(x) for x in X]
     Y = [np.round(y) for y in Y]
-    #print(f'X={X}')
-    #print(f'Y={Y}')
+    
     #X = [band[i][0] for i in range(len(band))]
     #Y = [band[i][1] for i in range(len(band))]
     results = []
@@ -104,7 +107,7 @@ band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #data = pd.read_csv("map_data.csv")
 X,Y,Z = mapCreation(offs)
 
-res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1]))#,options={'maxiter' : 10})
+res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1]),method = 'BFGS',options={'maxiter' : 20, 'eps' : 1.0})
 
 #%%
 new_x = np.array(res.x[::2])
