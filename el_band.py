@@ -48,18 +48,17 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     Z.to_csv("map_data.csv")
     return Z
 
-def T(band,idx,k=1):
+def Energy(band_list,k=1):
     """
-    This is the elastic band part, giving an energy contribution via Hooke's law.
+    These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
-    - band  the whole band
-    - idx   the currently used index
+    - band_list     1D array of meshgrids
     
     Optional arguments:
     - k     the spring constant, by default set to 1
     """
     results = []
-    if idx == 0 or idx == np.size(band,axis=0):
+    if idx == 0 or idx == np.size(band,axis=0)-1:
         results.append(0)
     else:
         results.append(k * ((band[idx-1,0]-band[idx,0])**2+(band[idx+1,0]-band[idx,0])**2 + \
@@ -79,15 +78,7 @@ p_final = (offs,10)
 band = np.zeros([N_band,2])
 band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
 band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
+band_list = list(band[:,0],band[:,1])
 #print(band)
 data = pd.read_csv("./map_data.csv")
 
-#By introducing the specific map and the corresponding height/pot. energy, we can combine it with the pot energy of the band
-# and obtain the effective U
-U = np.empty(np.shape(band))
-# Here we have to identify the index of the band with "real" coordinates on the map
-
-
-
-for idx in range(N_band):
-    U = T(band,idx) + data[]
