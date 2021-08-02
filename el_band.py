@@ -59,7 +59,7 @@ def Energy(band,init,final,k=1):
     Optional arguments:
     - k     the spring constant, by default set to 1
     """
-    print(init,final)
+    #print(init,final)
     #band = np.array(band)
     #print(len(band))
     X = list(band[::2])
@@ -68,8 +68,10 @@ def Energy(band,init,final,k=1):
     Y = list(band[1::2])
     Y.insert(0,init[1])
     Y.append(final[1])
-    print(f'X={X}')
-    print(f'Y={Y}')
+    X = [np.round(x) for x in X]
+    Y = [np.round(y) for y in Y]
+    #print(f'X={X}')
+    #print(f'Y={Y}')
     #X = [band[i][0] for i in range(len(band))]
     #Y = [band[i][1] for i in range(len(band))]
     results = []
