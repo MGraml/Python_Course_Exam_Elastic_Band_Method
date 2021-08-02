@@ -40,7 +40,7 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     
     x   = np.linspace(*intv,N)
     X,Y = np.meshgrid(x,x)
-    Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)
+    Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)+np.exp(-(X+offs)**2)
     Z = np.where(Z<-1,-1,Z)
 
     plt.contourf(X,Y,Z)
@@ -50,7 +50,7 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     np.save("data_raw",X,Y,Z)
     return x,x,Z
 
-def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1):
+def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1e20):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
@@ -71,10 +71,14 @@ def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1):
     
     #print(f'X={X}')
     #print(f'Y={Y}')
-    
+    poten=0
+    for x in X:
+        for y in Y:
+            poten += Z_ext[int(np.round(x)),int(np.round(y))]
+    #Z = [Z_ext[int(np.round(x)),int(np.round(y))] for x,y in X,Y]
     X = [x_ext[int(np.round(x))] for x in X]
     Y = [y_ext[int(np.round(y))] for y in Y]
-
+    
     
     #X = [band[i][0] for i in range(len(band))]
     #Y = [band[i][1] for i in range(len(band))]
@@ -87,7 +91,8 @@ def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1):
         else:
             results.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
                         (Y[idpoint-1]-Y[idpoint])**2 + (Y[idpoint+1]-Y[idpoint])**2))
-    return np.sum(results)
+    print(np.sum(results),poten)
+    return np.sum(results)+poten
     
 
 
@@ -106,7 +111,7 @@ print(p_init[0],p_final[0])
 band = np.zeros([N_band,2])
 band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
 band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
-#band[3,0]   = 600
+band[3,0]   = 600
 band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #print(band)
 #data = pd.read_csv("map_data.csv")
