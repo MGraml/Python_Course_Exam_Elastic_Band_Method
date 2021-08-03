@@ -59,6 +59,7 @@ def Energy(band,init,final,k=1):
     Optional arguments:
     - k     the spring constant, by default set to 1
     """
+    #Remark - new commit
     print(init,final)
     #band = np.array(band)
     #print(len(band))
