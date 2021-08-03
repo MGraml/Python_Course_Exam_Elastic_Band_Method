@@ -25,7 +25,7 @@ def takeTime (func) :
     return wrapper
 
 @takeTime
-def mapCreation(offs, N = 1000, intv=(-10,10)):
+def mapCreation(offs, N = 10000, intv=(-10,10)):
     """
     Auxiliary tool for generating a csv file with "hilly" landscape in order 
     to test the elastic band with simple data.
@@ -40,7 +40,7 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     
     x   = np.linspace(*intv,N)
     X,Y = np.meshgrid(x,x)
-    Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)
+    Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)+np.exp(-1/3*(X+offs)**2)+3*np.exp(-0.01*(Y)**2)
     Z = np.where(Z<-1,-1,Z)
 
     plt.contourf(X,Y,Z)
@@ -48,9 +48,9 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     #data = pd.DataFrame(X,Y,Z)
     #data.to_csv("map_data.csv")
     np.save("data_raw",X,Y,Z)
-    return X,Y,Z
+    return x,x,Z
 
-def Energy(band,init,final,k=1):
+def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1e-3):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
@@ -59,8 +59,7 @@ def Energy(band,init,final,k=1):
     Optional arguments:
     - k     the spring constant, by default set to 1
     """
-    #Remark - new commit
-    print(init,final)
+    #print(init,final)
     #band = np.array(band)
     #print(len(band))
     X = list(band[::2])
@@ -69,8 +68,37 @@ def Energy(band,init,final,k=1):
     Y = list(band[1::2])
     Y.insert(0,init[1])
     Y.append(final[1])
-    print(f'X={X}')
-    print(f'Y={Y}')
+    idx_x = []
+    idx_y = []
+    #Creating Indices for Coordinates in Height
+    #print(x_ext)
+    spacing = (max(x_ext)-min(x_ext))/1000
+
+    for x in X:
+        comp_x = np.argwhere(np.where(np.abs(x_ext-x)<0.9*spacing,1,0))
+        #print(np.size(comp_x))
+        if np.size(comp_x) == 0:
+            raise RuntimeError(f"Found no matching indices for x={x}!")
+        elif x < 0 :
+            idx_x.append(comp_x[0][0])
+        else:
+            idx_x.append(comp_x[-1][0])
+    #print(y_ext)
+    for y in Y:
+        comp_y = np.argwhere(np.where(np.abs(y_ext-y)<0.9*spacing,1,0))
+        #print(np.size(comp_y))
+        if np.size(comp_y) == 0:
+            raise RuntimeError(f"Found no matching indices for y={y}!")
+        elif y < 0 :
+            idx_y.append(comp_y[0][0])
+        else:
+            idx_y.append(comp_y[-1][0])
+    
+    #print(idx_x,idx_y)
+    poten = 0
+    for i in range(np.size(idx_x)):
+        poten += Z[idx_x[i],idx_y[i]]
+
     #X = [band[i][0] for i in range(len(band))]
     #Y = [band[i][1] for i in range(len(band))]
     results = []
@@ -82,12 +110,13 @@ def Energy(band,init,final,k=1):
         else:
             results.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
                         (Y[idpoint-1]-Y[idpoint])**2 + (Y[idpoint+1]-Y[idpoint])**2))
-    return np.sum(results)
+    print(np.sum(results),poten)
+    return poten
     
 
 
 
-
+N=10000
 offs = -3*10/4
 #giving the length of the band N and the initial/final endpoint coordinates p
 N_band  = 10
@@ -97,20 +126,22 @@ p_final = (offs,10)
 band = np.zeros([N_band,2])
 band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
 band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
+band[4,0]   = -offs-0.5
 band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #print(band)
 #data = pd.read_csv("map_data.csv")
-X,Y,Z = mapCreation(offs)
+x,y,Z = mapCreation(offs,N=N)
 
-res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1]))#,options={'maxiter' : 10})
+res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z,N),options={'disp':True})
 
 #%%
 new_x = np.array(res.x[::2])
 new_y = np.array(res.x[1::2])
 new_band = np.stack((new_x,new_y))
 print(new_band)
+X,Y = np.meshgrid(x,y)
 plt.contourf(X,Y,Z)
-plt.scatter(new_band[0],new_band[1])
+plt.scatter(new_band[0],new_band[1],c='green')
 plt.scatter(band[:,0],band[:,1],c='red',s=1)
 plt.show()
 
