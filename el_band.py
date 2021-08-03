@@ -40,8 +40,9 @@ def mapCreation(offs, N = 10000, intv=(-10,10)):
     
     x   = np.linspace(*intv,N)
     X,Y = np.meshgrid(x,x)
-    Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)#-1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)+np.exp(-1/3*(X+offs)**2)+3*np.exp(-0.01*(Y)**2)
-    Z = np.where(Z<-1,-1,Z)
+    Z = Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)#+np.exp(-1/3*(X+offs)**2)+3*np.exp(-0.01*(Y)**2) #+3*np.exp(-0.1*((X)**2+(Y+7)**2))+3*np.exp(-0.1*((X)**2+(Y-8)**2))#+3*np.exp(-0.01*((Y-offs)**2+(X-10)**2))+3*np.exp(-0.01*((X-offs)**2+(Y-10)**2))
+    #-1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)+np.exp(-1/3*(X+offs)**2)+3*np.exp(-0.01*(Y)**2)
+    #Z = np.where(Z<-1,-1,Z)
 
     plt.contourf(X,Y,Z)
     plt.savefig("map_raw.png")
@@ -50,7 +51,7 @@ def mapCreation(offs, N = 10000, intv=(-10,10)):
     np.save("data_raw",X,Y,Z)
     return x,x,Z
 
-def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
+def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1e-1):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
@@ -132,17 +133,18 @@ band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #data = pd.read_csv("map_data.csv")
 x,y,Z = mapCreation(offs,N=N)
 
-bound = [(-10,10) for _ in range((N_band-2)*2)]
 spacing = (max(x)-min(x))/N
+bound = [(-10+spacing,10-spacing) for _ in range((N_band-2)*2)]
+
 res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z,N),bounds=bound,jac='2-point',options={'disp':True,'finite_diff_rel_step':spacing})
 
 #%%
 new_x = np.array(res.x[::2])
 new_y = np.array(res.x[1::2])
 new_band = np.stack((new_x,new_y))
-print(new_band)
+#print(new_band)
 X,Y = np.meshgrid(x,y)
-plt.contourf(X,Y,Z,levels=25,colormap='gist_heat')
+plt.contourf(X,Y,Z,levels=25,cmap='gist_heat')
 plt.colorbar()
 plt.scatter(new_band[0],new_band[1],c='green')
 plt.scatter(band[:,0],band[:,1],c='red',s=1)
