@@ -50,7 +50,7 @@ def mapCreation(offs, N = 1000, intv=(-10,10)):
     np.save("data_raw",X,Y,Z)
     return x,x,Z
 
-def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1e20):
+def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
@@ -91,8 +91,8 @@ def Energy(band,init,final,x_ext,y_ext,Z_ext,k=1e20):
         else:
             results.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
                         (Y[idpoint-1]-Y[idpoint])**2 + (Y[idpoint+1]-Y[idpoint])**2))
-    print(np.sum(results),poten)
-    return np.sum(results)+poten
+    #print(np.sum(results),poten)
+    return np.sum(results)#+poten
     
 
 
@@ -106,32 +106,34 @@ p_final = (125,999)
 
 x,y,Z = mapCreation(offs,N=N)
 
-print(p_init[0],p_final[0])
+#print(p_init[0],p_final[0])
 #Creating a linear interpolation between the two points as a first guess
 band = np.zeros([N_band,2])
 band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
 band[:,1]   = np.linspace(p_init[1],p_final[1],N_band)
-band[3,0]   = 600
+band[3,0]   = 650
 band_list = [band[i,:] for i in range(np.shape(band)[0])]
 #print(band)
 #data = pd.read_csv("map_data.csv")
 
 
-res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z),method = 'BFGS',options={'maxiter' : 20, 'eps' : 2.0})
 
 #%%
+res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z),method = 'BFGS',options={'maxiter' : 20, 'eps' : 1.1,'disp':True})
+
+plt.close('all')
 new_x = np.array(res.x[::2])
 new_y = np.array(res.x[1::2])
 new_band = np.stack((new_x,new_y))
-print(new_band)
+#print(new_band)
 plt.contourf(x,y,Z)
 x_init = [x[int(round(i))] for i in band[:,0]]
 y_init = [y[int(round(i))] for i in band[:,1]]
-plt.scatter(x_init,y_init)
+plt.scatter(x_init,y_init, c='green')
 #print(x[int(round(new_band[2,0]))])
 x_final = [x[int(round(i))] for i in new_band[0,:]]
 y_final = [y[int(round(i))] for i in new_band[1,:]]
 #print(x_final,y_final,np.shape(x_final))
-plt.scatter(x_final,y_final,c='red',s=1)
+plt.scatter(x_final,y_final,c='red',s=2)
 plt.show()
 
