@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 
-
-*.npy
+map_data.csv
+data_raw.npy
