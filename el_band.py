@@ -51,7 +51,7 @@ def mapCreation(offs, N = 10000, intv=(-10,10)):
     np.save("data_raw",X,Y,Z)
     return x,x,Z
 
-def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1e-1):
+def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
@@ -123,6 +123,7 @@ offs = -3*10/4
 N_band  = 50
 p_init  = (10,offs)
 p_final = (offs,10)
+k=1.2
 #Creating a linear interpolation between the two points as a first guess
 band = np.zeros([N_band,2])
 band[:,0]   = np.linspace(p_init[0],p_final[0],N_band)
@@ -136,7 +137,7 @@ x,y,Z = mapCreation(offs,N=N)
 spacing = (max(x)-min(x))/N
 bound = [(-10+spacing,10-spacing) for _ in range((N_band-2)*2)]
 
-res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z,N),bounds=bound,jac='2-point',options={'disp':True,'finite_diff_rel_step':spacing})
+res = opt.minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z,N,k),method='L-BFGS-B',bounds=bound,jac='2-point',options={'maxiter':80,'disp':True,'eps':spacing})
 
 #%%
 new_x = np.array(res.x[::2])
@@ -149,4 +150,3 @@ plt.colorbar()
 plt.scatter(new_band[0],new_band[1],c='green')
 plt.scatter(band[:,0],band[:,1],c='red',s=1)
 plt.show()
-
