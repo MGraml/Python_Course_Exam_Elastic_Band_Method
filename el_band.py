@@ -8,121 +8,7 @@ import time
 import random
 import functools
 
-
-
-def takeTime (func) :
-    """
-    Decorator for checking the runtime of single functions.
-    Necessary arguments: A function to
-    """
-    @functools.wraps(func)
-    def wrapper (*args, **kwargs) :
-        tic = time.perf_counter()
-        result = func(*args, **kwargs)
-        toc = time.perf_counter()
-        print(f"Time elapsed for {func.__name__}: {(toc - tic) * 1000:8.3f} ms")
-        return result
-    return wrapper
-
-@takeTime
-def mapCreation(offs, N = 10000, intv=(-10,10)):
-    """
-    Auxiliary tool for generating a csv file with "hilly" landscape in order 
-    to test the elastic band with simple data.
-    necessary arguments:
-    - offs  Offset, where the minimum should be centered around
-
-    optional arguments: 
-    - N     Number of grid points in one direction
-    - d     interval of the data given as tuple
-    - 
-    """
-    
-    x   = np.linspace(*intv,N)
-    X,Y = np.meshgrid(x,x)
-    Z = +3*np.exp(-0.1*((X-4)**2+(Y+7)**2))+3*np.exp(-0.1*((X)**2+(Y-8)**2))
-    #-1*np.exp(-1*(X)**2)-1*np.exp(-1*(Y-offs)**2) #3*np.exp(-0.1*((X-4)**2+(Y)**2))#-1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)#+np.exp(-1/3*(X+offs)**2)+3*np.exp(-0.01*(Y)**2) #+3*np.exp(-0.1*((X)**2+(Y+7)**2))+3*np.exp(-0.1*((X)**2+(Y-8)**2))#+3*np.exp(-0.01*((Y-offs)**2+(X-10)**2))+3*np.exp(-0.01*((X-offs)**2+(Y-10)**2))
-    #-1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)+np.exp(-1/3*(X+offs)**2)+3*np.exp(-0.01*(Y)**2)
-    
-    plt.contourf(X,Y,Z)
-    plt.savefig("map_raw.png")
-    #data = pd.DataFrame((X,Y,Z))
-    #data.to_csv("map_data.csv")
-    #np.save("data_raw",X,Y,Z)
-    return x,x,Z
-
-def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
-    """
-    These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
-    Necessary arguments:
-    - band     1D array of tuples
-    
-    Optional arguments:
-    - k     the spring constant, by default set to 1
-    """
-    #print(init,final)
-    #band = np.array(band)
-    #print(len(band))
-    #print(np.shape(band),band)
-    X = list(band[::2])
-    #print(X)
-    X.insert(0,init[0])
-    X.append(final[0])
-    Y = list(band[1::2])
-    Y.insert(0,init[1])
-    Y.append(final[1])
-    idx_x = []
-    idx_y = []
-    #Creating Indices for Coordinates in Height
-    #print(x_ext)
-    spacing = (max(x_ext)-min(x_ext))/N
-
-    for x in X:
-        comp_x = np.argwhere(np.where(np.abs(x_ext-x)<0.9*spacing,1,0))
-        #print(np.size(comp_x))
-        #print(comp_x)
-        if np.size(comp_x) == 0:
-            raise RuntimeError(f"Found no matching indices for x={x}!")
-        elif x < 0 :
-            idx_x.append(comp_x[0][0])
-        else:
-            idx_x.append(comp_x[-1][0])
-    #print(y_ext)
-    for y in Y:
-        comp_y = np.argwhere(np.where(np.abs(y_ext-y)<0.9*spacing,1,0))
-        #print(np.size(comp_y))
-        if np.size(comp_y) == 0:
-            raise RuntimeError(f"Found no matching indices for y={y}!")
-        elif y < 0 :
-            idx_y.append(comp_y[0][0])
-        else:
-            idx_y.append(comp_y[-1][0])
-    
-    #print(idx_x,idx_y)
-    poten = 0
-    for i in range(np.size(idx_x)):
-        poten += Z[idx_y[i],idx_x[i]]
-    #    poten += -1*np.exp(-0.01*(X)**2)-1*np.exp(-0.01*(Y-offs)**2)
-
-    #X = [band[i][0] for i in range(len(band))]
-    #Y = [band[i][1] for i in range(len(band))]
-    results = []
-    #poten   = []
-    for idpoint in range(len(X)):
-        #poten.append(height(X[idpoint],Y[idpoint]))
-        if idpoint == 0:
-            results.append(k*((X[0]-X[1])**2+(Y[0]-Y[1])**2))
-        elif idpoint == len(X)-1:
-            results.append(k*((X[-1]-X[-2])**2+(Y[-1]-Y[-2])**2))
-        else:
-            results.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
-                        (Y[idpoint-1]-Y[idpoint])**2 + (Y[idpoint+1]-Y[idpoint])**2))
-    #print(np.sum(results),poten)
-    return poten + np.sum(results)
-    
-def height(X,Y):
-    return +3*np.exp(-0.1*((X-4)**2+(Y+7)**2))+3*np.exp(-0.1*((X)**2+(Y-8)**2))
-
+import el_band_funcs.py
 
 N=5000
 offs = -3*10/4
@@ -142,7 +28,11 @@ print(np.array(band_list).flatten())
 
 #print(band)
 #data = pd.read_csv("map_data.csv")
-x,y,Z = mapCreation(offs,N=N)
+mapCreation(offs, N = N)
+data = pd.read_csv("map_data.csv",index_col=0)
+X = np.array(data.index,dtype=float)
+Y = np.array(data.columns,dtype=float)
+Z = data.values
 
 spacing = (max(x)-min(x))/N
 bound = [(-10+spacing,10-spacing) for _ in range((N_band-2)*2)]
