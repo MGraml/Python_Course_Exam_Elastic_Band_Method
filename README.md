@@ -22,4 +22,5 @@ Without you, the whole battalion would have perished in the devastating fire of 
 Luckily, the general is now aware of the hot spots, which are targeted by the enemy and which exactly cross the red planned line of advance.
 The general is showing you the new blue route for invasion and gives the command...
 
-![grafik](https://user-images.githubusercontent.com/78024843/128181604-22826b64-3cb5-4421-a2c1-544602dba2e2.png)
+![grafik](https://user-images.githubusercontent.com/78024843/128205196-da1df4d9-c7fa-4bef-8374-dbd14e90ab6f.png)
+
