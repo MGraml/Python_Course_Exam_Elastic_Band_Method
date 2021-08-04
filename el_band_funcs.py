@@ -1,9 +1,9 @@
-"""
-Created on Wed Aug  4 10:23:56 2021
-
-@author: maxim
-"""
-
+from numpy.lib.function_base import _parse_input_dimensions
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import time
+import functools
 
 def takeTime (func) :
     """
@@ -64,23 +64,22 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     Y.insert(0,init[1])
     Y.append(final[1])
     
-    #Creating Indices for Coordinates in Height
+    #Creating indices for coordinates in potential height
     spacing = (max(x_ext)-min(x_ext))/N
     idx_x = []
     idx_y = []
+    
     for x in X:
         comp_x = np.argwhere(np.where(np.abs(x_ext-x)<0.9*spacing,1,0))
-        #print(np.size(comp_x))
         if np.size(comp_x) == 0:
             raise RuntimeError(f"Found no matching indices for x={x}!")
         elif x < 0 :
             idx_x.append(comp_x[0][0])
         else:
             idx_x.append(comp_x[-1][0])
-    #print(y_ext)
+            
     for y in Y:
         comp_y = np.argwhere(np.where(np.abs(y_ext-y)<0.9*spacing,1,0))
-        #print(np.size(comp_y))
         if np.size(comp_y) == 0:
             raise RuntimeError(f"Found no matching indices for y={y}!")
         elif y < 0 :
