@@ -5,6 +5,7 @@ import pandas as pd
 import time
 import functools
 
+
 def takeTime (func) :
     """
     Decorator for checking the runtime of single functions.
@@ -19,6 +20,8 @@ def takeTime (func) :
         return result
     return wrapper
 
+
+#Functions to create different potential maps
 def trench(X,Y):
     offs=-3*10/4
     Z   =   -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)
@@ -32,7 +35,7 @@ def mortars(X,Y):
 
 
 @takeTime
-def mapCreation(func,offs=-3*10/4, N = 10000, intv=(-10,10)):
+def mapCreation(func,offs=-3*10/4, N = 1000, intv=(-10,10)):
     """
     Auxiliary tool for generating a csv file with "hilly" landscape in order 
     to test the elastic band with simple data.  
@@ -128,53 +131,72 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     #Return the total energy
     return energy_pot + np.sum(energy_spring)
 
+
 @takeTime
 def run(params):
     """
     This function is the heart of the whole program.
     It initializes the map (depending on csv_existing by mapCreation or from an external csv).
 
-    FUNC IN MAPCREATOR
-    
+    It uses parameters from the params class 
     """
+    
+    #Create map if necessary
     if params.csv_existing == False:
         mapCreation(params.func,N = params.N)
+    #Load map
     data = pd.read_csv("map_data.csv",index_col=0)
     x = np.array(data.index,dtype=float)
     y = np.array(data.columns,dtype=float)
     Z = data.values
 
-
-
-    #Creating a linear interpolation between the two points as a first guess
+    #Creating a linear interpolation between the end points as a first guess
     band = np.zeros([params.N_band,2])
     band[:,0]   = np.linspace(params.p_init[0],params.p_final[0],params.N_band)
     band[:,1]   = np.linspace(params.p_init[1],params.p_final[1],params.N_band)
     band_list = [band[i,:] for i in range(np.shape(band)[0])]
 
-
-
-
+    #Specify the value spacing of the map and the bounds
     spacing = (max(x)-min(x))/np.size(x)
-    bound = [(-10+spacing,10-spacing) for _ in range((params.N_band-2)*2)]
+    bound = [(-min(x)+spacing,max(x)-spacing) for _ in range((params.N_band-2)*2)]
+    
+    #Arguments for the Energy function: inital, final, x, y, Z, map-resolution, spring-constant
+    args = (band_list[0],band_list[-1],x,y,Z,params.N,params.k)
+    
+    #The scipy.optimize.minimize evaluates the total energy of all band points and minimizes it.
+    #The initial and final points need to be given seperatly, so that they don't get minimized.
+    #The 'eps'-option sets the absolute step size the algorithm makes.
+    #It has to be slightly larger than the map spacing so that new values get evaluated.
+    res = minimize(Energy,band_list[1:-1],args=args,bounds=bound,options={'disp':True,'eps':spacing*1.05})
 
-    res = minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z,params.N,params.k),bounds=bound,options={'disp':True,'eps':spacing*1.05})
-
-
+    #Extract the minimized coordinates from the flattened result and append the end points
     new_x = np.array(res.x[::2])
+    new_x.append(band_list[-1][0])
+    new_x.insert(0,band_list[0][0])
     new_y = np.array(res.x[1::2])
-    new_band = np.stack((new_x,new_y))
+    new_y.append(band_list[-1][1])
+    new_y.insert(0,band_list[0][1])
 
-
-    X,Y = np.meshgrid(x,y)
+    #Prepare the plot
     fig = plt.figure()
     ax = fig.add_subplot()
-    cont = ax.contourf(X,Y,Z,levels=25,cmap='gist_heat')
-    fig.colorbar(cont)
-    ax.scatter(new_band[0],new_band[1],c='blue',s=10,label='relaxed band')
-    ax.scatter(band[:,0],band[:,1],c='red',s=1,label='initial band')
     ax.set_xlabel('x coordinate of the map')
     ax.set_ylabel('y coordinate of the map')
     ax.legend()
     ax.set_title(f'Test of the band with k={params.k} for {params.func}')
-    fig.savefig(f'el_band_k={params.k}_map_{params.func}.png')
+
+    #Plot the potential map
+    X,Y = np.meshgrid(x,y)
+    cont = ax.contourf(X,Y,Z,levels=25,cmap='gist_heat')
+    fig.colorbar(cont)
+    
+    #Plot the initial band
+    ax.scatter(band[:,0],band[:,1],c='red',s=3,label='initial band')
+    
+    #Plot the minimized band
+    ax.scatter(new_x,new_y,c='blue',s=10,label='relaxed band')
+    
+    #Save the plot
+    fig.savefig(f'./images/el_band_k={params.k}_map_{params.func}.png')
+    
+    
