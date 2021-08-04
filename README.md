@@ -24,3 +24,19 @@ The general is showing you the new blue route for invasion and gives the command
 
 ![grafik](https://user-images.githubusercontent.com/78024843/128205196-da1df4d9-c7fa-4bef-8374-dbd14e90ab6f.png)
 
+
+
+Besides our small adventure is the elastic band or path-over-hills method used to find the minimal energy configuration of a path between two points
+and works in the following way:
+
+
+By giving the necessary parameters in the params class of the params.py file (Size of the system, end points of the band, given landscape,...),
+one prepares the program.
+These informations are passed to the run() function in el_band_funcs, which starts by calling the mapCreator() with a specified function 
+for the landscape or importing an external csv.
+After that the band is created and as first step linearly interpolated between the end points.
+By the scipy algorithm scipy.optimize.minimize, one obtains the global energy minimum and the corresponding local band points, which are afterwards 
+plotted above the landscape as heatmap and exported in a png file.
+
+
+Have fun :)
