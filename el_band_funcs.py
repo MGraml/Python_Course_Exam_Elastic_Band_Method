@@ -40,7 +40,6 @@ def mapCreation(offs, N = 10000, intv=(-10,10)):
     
     #Save the map to "map_data.csv"
     data = pd.DataFrame(Z,index=x,columns=x)
-    print(data)
     data.to_csv("map_data.csv")
     
     return
@@ -50,10 +49,19 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     """
     These are both energies: the elastic band part, giving an energy contribution via Hooke's law and the potential energy/height.
     Necessary arguments:
-    - band     1D array of tuples
+    - band      list: tuples as band x,y-coordinates
+    - init      tuple: initial band point's coordinates
+    - final     tuple: final band point's coordinates
+    - x_ext     1D-array: x-coordinates of potential-map
+    - y_ext     1D-array: y-coordinates of potential-map
+    - Z         2D-array: potential values
     
     Optional arguments:
-    - k     the spring constant, by default set to 1
+    - N         resolution of potential map, by default set to 1000
+    - k         the spring constant, by default set to 1
+    
+    Returns:
+    - float     total energy of the band configuration
     """
     
     #Assemble the X and Y arrays from the new minimize-data and the fixed end points
@@ -64,7 +72,7 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     Y.insert(0,init[1])
     Y.append(final[1])
     
-    #Creating indices for coordinates in potential height
+    #Creating indices for coordinates in potential energy map
     spacing = (max(x_ext)-min(x_ext))/N
     idx_x = []
     idx_y = []
@@ -87,23 +95,25 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
         else:
             idx_y.append(comp_y[-1][0])
     
-    #print(idx_x,idx_y)
-    poten = 0
+    #Calculate energy contribution of potential background
+    energy_pot = 0
     for i in range(np.size(idx_x)):
-        poten += Z[idx_x[i],idx_y[i]]
+        energy_pot += Z[idx_x[i],idx_y[i]]
 
-    #X = [band[i][0] for i in range(len(band))]
-    #Y = [band[i][1] for i in range(len(band))]
-    results = []
+    #Calculate energy contribution of springs between points
+    energy_spring = []
     for idpoint in range(len(X)):
+        #Contribution of fixed end points
         if idpoint == 0:
-            results.append(k*((X[0]-X[1])**2+(Y[0]-Y[1])**2))
+            energy_spring.append(k*((X[0]-X[1])**2+(Y[0]-Y[1])**2))
         elif idpoint == len(X)-1:
-            results.append(k*((X[-1]-X[-2])**2+(Y[-1]-Y[-2])**2))
+            energy_spring.append(k*((X[-1]-X[-2])**2+(Y[-1]-Y[-2])**2))
+        #Contribution of springs to the points before and after
         else:
-            results.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
+            energy_spring.append(k * ((X[idpoint-1]-X[idpoint])**2+(X[idpoint+1]-X[idpoint])**2 + \
                         (Y[idpoint-1]-Y[idpoint])**2 + (Y[idpoint+1]-Y[idpoint])**2))
-    #print(np.sum(results),poten)
-    return poten + np.sum(results)
+                
+    #Return the total energy
+    return energy_pot + np.sum(energy_spring)
 
 
