@@ -39,4 +39,4 @@ By the scipy algorithm scipy.optimize.minimize, one obtains the global energy mi
 plotted above the landscape as heatmap and exported in a png file.
 
 
-Have fun :)
+Have fun :) (Will you discover the easteregg?)

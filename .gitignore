@@ -131,5 +131,7 @@ dmypy.json
 .pyre/
 
 
+.vscode
+__pycache__
 map_data.csv
 data_raw.npy

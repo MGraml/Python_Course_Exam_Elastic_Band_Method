@@ -13,6 +13,17 @@ def takeTime (func) :
     """
     @functools.wraps(func)
     def wrapper (*args, **kwargs) :
+        
+        if func.__name__ == 'run' and args[0].func == 'mortars':
+            print("\
+            =============================================\n\
+                        THIS IS A WARZONE!!! \n\
+                YOU ARE ADVANCING ON ENEMY LINES AND \n\
+                        LEFT THE TRENCH!             \n\
+                WATCH OUT FOR IMPACT OF ENEMY FIRE!!!\n\
+                        GOOD LUCK OUT THERE! \n\
+            =============================================\n\
+            ")
         tic = time.perf_counter()
         result = func(*args, **kwargs)
         toc = time.perf_counter()
@@ -158,7 +169,7 @@ def run(params):
 
     #Specify the value spacing of the map and the bounds
     spacing = (max(x)-min(x))/np.size(x)
-    bound = [(-min(x)+spacing,max(x)-spacing) for _ in range((params.N_band-2)*2)]
+    bound = [(min(x)+spacing,max(x)-spacing) for _ in range((params.N_band-2)*2)]
     
     #Arguments for the Energy function: inital, final, x, y, Z, map-resolution, spring-constant
     args = (band_list[0],band_list[-1],x,y,Z,params.N,params.k)
@@ -167,13 +178,14 @@ def run(params):
     #The initial and final points need to be given seperatly, so that they don't get minimized.
     #The 'eps'-option sets the absolute step size the algorithm makes.
     #It has to be slightly larger than the map spacing so that new values get evaluated.
-    res = minimize(Energy,band_list[1:-1],args=args,bounds=bound,options={'disp':True,'eps':spacing*1.05})
-
+    print("Starting minimizer.")
+    res = minimize(Energy,band_list[1:-1],args=args,bounds=bound,options={'disp':False,'eps':spacing*1.05})
+    print("Minimizer finished.")
     #Extract the minimized coordinates from the flattened result and append the end points
-    new_x = np.array(res.x[::2])
+    new_x = list(res.x[::2])
     new_x.append(band_list[-1][0])
     new_x.insert(0,band_list[0][0])
-    new_y = np.array(res.x[1::2])
+    new_y = list(res.x[1::2])
     new_y.append(band_list[-1][1])
     new_y.insert(0,band_list[0][1])
 
@@ -182,7 +194,6 @@ def run(params):
     ax = fig.add_subplot()
     ax.set_xlabel('x coordinate of the map')
     ax.set_ylabel('y coordinate of the map')
-    ax.legend()
     ax.set_title(f'Test of the band with k={params.k} for {params.func}')
 
     #Plot the potential map
@@ -197,6 +208,7 @@ def run(params):
     ax.scatter(new_x,new_y,c='blue',s=10,label='relaxed band')
     
     #Save the plot
+    ax.legend()
     fig.savefig(f'./images/el_band_k={params.k}_map_{params.func}.png')
     
-    
+    return

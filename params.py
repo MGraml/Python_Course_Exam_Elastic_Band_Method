@@ -26,4 +26,4 @@ class params:
     k                   =       0.1    
 
     csv_existing        =       False 
-    func                =       "mortars"
+    func                =       "trench"        #Possibly input: trench,mortars (Watch out for the easteregg ;) )

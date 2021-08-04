@@ -12,7 +12,7 @@ After that the band is created and as first step linearly interpolated between t
 By the scipy algorithm scipy.optimize.minimize, one obtains the global energy minimum and the corresponding local band points, which are afterwards 
 plotted above the landscape as heatmap and exported in a png file.
 
-Have fun :)
+Have fun :) (Will you discover the easteregg?)
 
 """
 
