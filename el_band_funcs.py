@@ -1,4 +1,4 @@
-from numpy.lib.function_base import _parse_input_dimensions
+from scipy.optimize import minimize
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -15,19 +15,30 @@ def takeTime (func) :
         tic = time.perf_counter()
         result = func(*args, **kwargs)
         toc = time.perf_counter()
-        print(f"Time elapsed for {func.__name__}: {(toc - tic) * 1000:8.3f} ms")
+        print(f"Time elapsed for {func.__name__}: {(toc - tic):8.3f} s")
         return result
     return wrapper
 
+def trench(X,Y):
+    offs=-3*10/4
+    Z   =   -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)
+    Z   =   np.where(Z<-1,-1,Z)
+    return Z
+
+def mortars(X,Y):
+    offs=-3*10/4
+    Z   =   +3*np.exp(-0.1*((Y-8)**2+(X)**2))+3*np.exp(-0.1*((X-4)**2+(Y+7)**2))
+    return Z
+
+
 @takeTime
-def mapCreation(offs, N = 10000, intv=(-10,10)):
+def mapCreation(func,offs=-3*10/4, N = 10000, intv=(-10,10)):
     """
     Auxiliary tool for generating a csv file with "hilly" landscape in order 
-    to test the elastic band with simple data.
-    necessary arguments:
-    - offs  Offset, where the minimum should be centered around
+    to test the elastic band with simple data.  
 
     optional arguments: 
+    - offs  Offset, where the minimum should be centered around
     - N     Number of grid points in one direction
     - intv  interval of the data given as tuple
     """
@@ -35,9 +46,10 @@ def mapCreation(offs, N = 10000, intv=(-10,10)):
     x   = np.linspace(*intv,N)
     X,Y = np.meshgrid(x,x)
     
-    #Gaussian to make a "energy trench"
-    Z = -1*np.exp(-(X-offs)**2)-1*np.exp(-(Y-offs)**2)
-    
+    #Gaussian to make a "energy trench" or several other landscapes
+    funcs   =   {'mortars': mortars,'trench':trench}
+    Z       =   funcs[func](X,Y)
+
     #Save the map to "map_data.csv"
     data = pd.DataFrame(Z,index=x,columns=x)
     data.to_csv("map_data.csv")
@@ -98,7 +110,7 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     #Calculate energy contribution of potential background
     energy_pot = 0
     for i in range(np.size(idx_x)):
-        energy_pot += Z[idx_x[i],idx_y[i]]
+        energy_pot += Z[idx_y[i],idx_x[i]]
 
     #Calculate energy contribution of springs between points
     energy_spring = []
@@ -116,4 +128,53 @@ def Energy(band,init,final,x_ext,y_ext,Z,N=1000,k=1):
     #Return the total energy
     return energy_pot + np.sum(energy_spring)
 
+@takeTime
+def run(params):
+    """
+    This function is the heart of the whole program.
+    It initializes the map (depending on csv_existing by mapCreation or from an external csv).
 
+    FUNC IN MAPCREATOR
+    
+    """
+    if params.csv_existing == False:
+        mapCreation(params.func,N = params.N)
+    data = pd.read_csv("map_data.csv",index_col=0)
+    x = np.array(data.index,dtype=float)
+    y = np.array(data.columns,dtype=float)
+    Z = data.values
+
+
+
+    #Creating a linear interpolation between the two points as a first guess
+    band = np.zeros([params.N_band,2])
+    band[:,0]   = np.linspace(params.p_init[0],params.p_final[0],params.N_band)
+    band[:,1]   = np.linspace(params.p_init[1],params.p_final[1],params.N_band)
+    band_list = [band[i,:] for i in range(np.shape(band)[0])]
+
+
+
+
+    spacing = (max(x)-min(x))/np.size(x)
+    bound = [(-10+spacing,10-spacing) for _ in range((params.N_band-2)*2)]
+
+    res = minimize(Energy,band_list[1:-1],args=(band_list[0],band_list[-1],x,y,Z,params.N,params.k),bounds=bound,options={'disp':True,'eps':spacing*1.05})
+
+
+    new_x = np.array(res.x[::2])
+    new_y = np.array(res.x[1::2])
+    new_band = np.stack((new_x,new_y))
+
+
+    X,Y = np.meshgrid(x,y)
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    cont = ax.contourf(X,Y,Z,levels=25,cmap='gist_heat')
+    fig.colorbar(cont)
+    ax.scatter(new_band[0],new_band[1],c='blue',s=10,label='relaxed band')
+    ax.scatter(band[:,0],band[:,1],c='red',s=1,label='initial band')
+    ax.set_xlabel('x coordinate of the map')
+    ax.set_ylabel('y coordinate of the map')
+    ax.legend()
+    ax.set_title(f'Test of the band with k={params.k} for {params.func}')
+    fig.savefig(f'el_band_k={params.k}_map_{params.func}.png')
