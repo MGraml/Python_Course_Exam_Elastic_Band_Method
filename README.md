@@ -1,7 +1,8 @@
 # Python Advanced - Final Project - Elastic Band Method 
 
 ![grafik](https://user-images.githubusercontent.com/78024843/128179239-1eeed425-9e78-4ed9-9d47-9eab5edebf7c.png)
-Source: https://pics.me.me/thumb_tiger-in-the-flightdeck-the-lack-of-context-here-is-thrilling-mark-watney-spacepirate-introductory-60996521.png
+
+Credits: https://pics.me.me/thumb_tiger-in-the-flightdeck-the-lack-of-context-here-is-thrilling-mark-watney-spacepirate-introductory-60996521.png
 
 This project was dedicated to explore the wild landscape of... Anything which one provides as a .csv-file.
 No matter if we talk about arctic water between frozen icebergs, bobbing up and down, rocky hills in front of the Himalaya or dusty desert with suffocating sand, we will be able to plot the right pathway to rescue our princess (which is somehow lost in the mountains, I guess due to Smaug).
@@ -40,3 +41,7 @@ plotted above the landscape as heatmap and exported in a png file.
 
 
 Have fun :) (Will you discover the easteregg?)
+
+![grafik](https://user-images.githubusercontent.com/78024843/128217163-6ab89c87-8a54-4cc1-a368-df582f5c7bc5.png)
+
+Credits: https://xkcd.com/85/
