@@ -20,7 +20,7 @@ class params:
     N_band              =       50
 
     
-    p_init              =       (7.5,-10)
+    p_init              =       (10,-7.5)
     p_final             =       (-7.5,10)
 
     k                   =       0.1    
